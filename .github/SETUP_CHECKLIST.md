@@ -19,6 +19,33 @@
 
 - [ ] Settings → Actions → General → Enable workflows
 - [ ] Set "Read and write permissions"
+- [ ] Tick **"Allow GitHub Actions to create and approve pull requests"**
+- [ ] If the repo is owned by an organisation, tick the **same box at org
+      level** (`https://github.com/organizations/<ORG>/settings/actions`) —
+      the org setting gates the repository one, and it is **off by default on
+      new organisations**
+
+Without both boxes the promotion workflow fails at PR creation with:
+
+```
+GraphQL: GitHub Actions is not permitted to create or approve pull requests
+```
+
+### 2a. Create the `maintainers` team (organisation-owned repos)
+
+`reusable-promote-squash.yml` hardcodes `<org>/maintainers` as the reviewer on
+the promotion PR. The team must exist or `gh pr create` fails with
+`Could not resolve team with slug '<org>/maintainers'`.
+
+- [ ] Create a team named exactly **`maintainers`** in the org
+      (`https://github.com/orgs/<ORG>/new-team`)
+- [ ] Add yourself to it
+- [ ] Grant the team access to this repository
+
+The slug is derived from `github.repository_owner`, so the name is not
+configurable from this repo. Note the failure only hits the PR *create* path —
+once a promotion PR exists, later runs take the `gh pr edit` path, which sets
+title and body only and does not touch reviewers.
 
 ### 3. Configure Testing and Production Branches
 
