@@ -103,6 +103,40 @@ wall of "none of the providers can be installed". `10-build.sh` branches on
 never appears — which looks like a broken build when you go looking for it.
 VAAPI is the path Kodi uses on Intel and AMD.
 
+**Do not restore the `dnf5 config-manager setopt` step.** The template sets
+`keepcache`/`install_weak_deps` that way; on the Fedora 43 CI runner it left a
+dnf.conf that dnf5 then refused to parse ("Missing '=' on line 4") while the
+same commit built fine on Fedora 44 and locally. `10-build.sh` writes the file
+directly and verifies dnf5 can parse it. The corruption never reproduced
+locally, so this is a removed dependency rather than an explained bug — put it
+back and you inherit an intermittent failure with no diagnosis.
+
+## Promotion workflow: known failures
+
+`promote-main-to-stable.yml` calls a reusable workflow built for
+projectbluefin's own org, and it assumes that structure. In order of appearance:
+
+1. **`packages: read`** must be in the caller's `permissions:` block — fixed
+   here, see the block's comment. A caller cannot grant more than it holds.
+2. **Actions PR creation** must be enabled at repo *and* org level.
+3. **`<org>/maintainers` team** must exist, or `gh pr create --reviewer` fails.
+   Only affects the create path, not later `gh pr edit` runs.
+4. **The "post validate status" step has a broken 404 guard.** It runs
+   `SHA=$(gh api ... --jq '.object.sha' 2>/dev/null || echo "")` — but `gh api`
+   writes its error JSON to *stdout*, so on a missing branch `SHA` holds the
+   404 body instead of being empty, the intended "skip" path never fires, and
+   it POSTs to a URL built from the error text: `unsupported protocol scheme ""`.
+   Nothing in this repo can fix it; it is upstream.
+
+Items 2 and 3 are documented in `.github/SETUP_CHECKLIST.md`. Items 1 and 4 are
+upstream bugs worth reporting to `projectbluefin/finpilot`.
+
+**The promotion branch name has been observed to differ between runs**
+(`auto/promote-testing-to-main` vs `auto/promote-main-to-stable`). If the
+promotion looks stuck, check which branches actually exist before assuming the
+workflow is broken. Promoting by hand — a normal PR from `main` to `stable` —
+is always a valid fallback and respects the "stable only receives PRs" rule.
+
 ## Hardware
 
 Built for Intel and AMD graphics. An NVIDIA variant is planned (via
