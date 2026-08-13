@@ -48,9 +48,6 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build/00-image-info.sh
 
-# Set dnf options before build scripts (persists across subsequent RUN layers)
-RUN dnf5 config-manager setopt keepcache=1 install_weak_deps=0
-
 # Kodi, media stack and hardware video acceleration
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache/libdnf5 \
