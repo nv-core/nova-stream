@@ -17,6 +17,35 @@ shopt -s nullglob
 
 FEDORA_MAJOR_VERSION="$(rpm -E %fedora)"
 
+echo "::group:: Configure dnf"
+
+# Write the build-time dnf options directly rather than going through
+# `dnf5 config-manager setopt`, which is what the finpilot template does.
+#
+# That setopt call left a dnf.conf that dnf5 itself then refused to parse
+# ("Error in configuration file /etc/dnf/dnf.conf: Missing '=' on line 4") on
+# the Fedora 43 CI runner while working on Fedora 44 and in local builds. The
+# damage only surfaces on the *next* dnf invocation, which is a separate build
+# step, so the error points nowhere near its cause.
+#
+# Writing the file is deterministic across dnf5 versions, and the parse check
+# below fails here - with the file contents - instead of somewhere downstream.
+# The base image ships only a comment and an empty [main], so nothing is lost.
+cat >/etc/dnf/dnf.conf <<'EOF'
+# see `man dnf.conf` for defaults and possible options
+[main]
+install_weak_deps=0
+keepcache=1
+EOF
+
+if ! dnf5 -q repoquery --installed bash >/dev/null 2>&1; then
+    echo "ERROR: dnf5 cannot parse /etc/dnf/dnf.conf after writing it:" >&2
+    cat -n /etc/dnf/dnf.conf >&2
+    exit 1
+fi
+
+echo "::endgroup::"
+
 echo "::group:: Enable RPM Fusion"
 
 # Kodi lives in RPM Fusion free. The nonfree repo is needed for
