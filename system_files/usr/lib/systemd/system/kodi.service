@@ -1,0 +1,38 @@
+[Unit]
+Description=Kodi standalone (GBM/DRM session)
+Documentation=https://github.com/nv-core/nova-stream
+After=systemd-user-sessions.service sound.target network-online.target
+Wants=network-online.target
+Conflicts=getty@tty1.service
+After=getty@tty1.service
+
+[Service]
+User=kodi
+Group=kodi
+
+# Kodi on GBM talks to DRM/KMS and libinput directly, so the session needs
+# render/video for the GPU, input for the remote and keyboard, and audio for
+# HDMI passthrough.
+SupplementaryGroups=video render input audio tty
+
+# PAMName=login combined with a real TTY is what registers this as a logind
+# session on seat0. Without it there is no seat, logind hands out no DRM
+# master, and Kodi exits with "failed to open any DRM device".
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+
+ExecStart=/usr/bin/kodi-standalone --windowing=gbm
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

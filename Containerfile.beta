@@ -1,0 +1,57 @@
+###############################################################################
+# nova-stream — beta track (Kodi 22.0b1 on Fedora 44)
+###############################################################################
+# Identical to the stable-track Containerfile except for the Fedora base and
+# the resulting Kodi version. Kodi 22 (Piers) is still a pre-release in RPM
+# Fusion (22.0-0.4b1) but carries the most complete GBM/HDR and AV1 support.
+#
+# Keep this file in lockstep with `Containerfile`; only the FROM digest,
+# FEDORA_MAJOR_VERSION, UBLUE_IMAGE_TAG and KODI_TRACK should differ.
+###############################################################################
+
+FROM scratch AS ctx
+
+COPY build /build
+COPY system_files /system_files
+
+FROM quay.io/fedora-ostree-desktops/base-atomic:44@sha256:c890295fb63774ae58dc995bbafa36bda311cd18cb6f6fd60283db568ed5eb12
+
+ARG IMAGE_NAME="nova-stream"
+ARG IMAGE_VENDOR="nv-core"
+ARG UBLUE_IMAGE_TAG="beta"
+ARG BASE_IMAGE_NAME="base-atomic"
+ARG FEDORA_MAJOR_VERSION="44"
+ARG VERSION=""
+
+ARG KODI_TRACK="beta"
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build/00-image-info.sh
+
+RUN dnf5 config-manager setopt keepcache=1 install_weak_deps=0
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=cache,dst=/var/cache/rpm-ostree \
+    --mount=type=secret,id=GITHUB_TOKEN \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build/10-build.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/boot \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build/20-appliance.sh
+
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    --mount=type=tmpfs,dst=/boot \
+    /ctx/build/clean-stage.sh
+
+RUN rm -rf /opt && ln -s /var/opt /opt
+
+CMD ["/sbin/init"]
+
+RUN bootc container lint --fatal-warnings

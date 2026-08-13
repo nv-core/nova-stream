@@ -1,0 +1,9 @@
+# A set-top box should boot to a logo and then to Kodi — never to a wall of
+# systemd output on the living room TV.
+kargs = [
+    "quiet",
+    "splash",
+    "loglevel=3",
+    "rd.systemd.show_status=false",
+    "vt.global_cursor_default=0",
+]

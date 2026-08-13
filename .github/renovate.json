@@ -1,0 +1,80 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":enablePreCommit"
+  ],
+  "prHourlyLimit": 10,
+  "prConcurrentLimit": 20,
+  "recreateWhen": "always",
+  "rebaseWhen": "auto",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track pinned container images in Justfile variables",
+      "managerFilePatterns": [
+        "/^Justfile$/"
+      ],
+      "matchStrings": [
+        "export\\s+\\w+\\s+:=\\s+env\\(\"[^\"]+\",\\s+\"(?<packageName>[^\\s:@]+(?:/[^\\s:@]+)+):(?<currentValue>[^\\s@\"]+)@(?<currentDigest>sha256:[a-f0-9]+)\"\\)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Track pinned tool versions in workflow env vars",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.+\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[^\\s]+) depName=(?<depName>[^\\s]+)\\n\\s+\\w+: \"(?<currentValue>[^\"]+)\""
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Automerge safe low-risk updates (digest/pin only) when checks pass",
+      "matchUpdateTypes": [
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Keep the shared projectbluefin actions channel fresh",
+      "matchPackageNames": [
+        "projectbluefin/actions"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "pinDigest",
+        "pin",
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "Do not automatically cross Fedora major releases; each nova-stream track is pinned to the Fedora release that carries its Kodi version",
+      "matchDepNames": [
+        "quay.io/fedora-ostree-desktops/base-atomic"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    }
+  ],
+  "dockerfile": {
+    "managerFilePatterns": [
+      "/(^|/)Containerfile$/",
+      "/(^|/)Containerfile\\.beta$/"
+    ]
+  }
+}
