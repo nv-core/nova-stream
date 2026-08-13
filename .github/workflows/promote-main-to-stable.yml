@@ -17,12 +17,22 @@ on:
       - main
   workflow_dispatch:
 
+# A caller cannot grant a reusable workflow more than it holds itself, so any
+# scope the nested jobs request must appear here or it resolves to `none` and
+# GitHub rejects the whole file. reusable-promote-squash.yml needs, across its
+# promote/gate/report-failure jobs: actions:read, contents:write, issues:write,
+# packages:read, pull-requests:write, statuses:write.
+#
+# The upstream finpilot template omits `packages: read`, which makes this
+# workflow fail to parse with "the nested job 'gate' is requesting
+# 'packages: read', but is only allowed 'packages: none'".
 permissions:
   contents: write
   pull-requests: write
   issues: write
   actions: read
   statuses: write
+  packages: read
 
 concurrency:
   group: promote-main-to-stable
