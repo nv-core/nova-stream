@@ -28,7 +28,7 @@ COPY system_files /system_files
 # Base Image - Fedora Atomic with no desktop environment.
 # NOTE: finpilot's template comments name `base-main`, which does not exist on
 # quay.io. The correct no-desktop Fedora Atomic base is `base-atomic`.
-FROM quay.io/fedora-ostree-desktops/base-atomic:43@sha256:b9b263495cbcda857fa5b490138bde6dc15413d1d0ab873d49e8e91e3ce42623
+FROM quay.io/fedora-ostree-desktops/base-atomic:43@sha256:58b91c0b5ceee347773caa80137106dca702eccea332f8b3914cb237b79abb5e
 
 # Image identity - consumed by build/00-image-info.sh
 ARG IMAGE_NAME="nova-stream"
