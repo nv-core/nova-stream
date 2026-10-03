@@ -14,7 +14,7 @@ FROM scratch AS ctx
 COPY build /build
 COPY system_files /system_files
 
-FROM quay.io/fedora-ostree-desktops/base-atomic:44@sha256:c890295fb63774ae58dc995bbafa36bda311cd18cb6f6fd60283db568ed5eb12
+FROM quay.io/fedora-ostree-desktops/base-atomic:44@sha256:23412e9652fc84e9fbc6cdafcd63cbe368786a951f550afd8e531836188a183d
 
 ARG IMAGE_NAME="nova-stream"
 ARG IMAGE_VENDOR="nv-core"
